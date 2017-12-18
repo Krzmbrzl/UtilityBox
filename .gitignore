@@ -1,0 +1,6 @@
+# ECLIPSE
+.settings/
+.*project
+
+#logs
+UtilityBox/UtilityBox_Logs/
