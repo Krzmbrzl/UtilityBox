@@ -20,7 +20,7 @@ public class Mp3FilenameFormatterRule extends FilenameFormatterRule {
 	 */
 	protected boolean keepId3v1Tags;
 	/**
-	 * Indiactes whether the information in the old ID3v1 tags should be
+	 * Indicates whether the information in the old ID3v1 tags should be
 	 * migrated into the new ID3v2 tags when they are not yet specified there
 	 */
 	protected boolean migrateId3v1TagInformation;

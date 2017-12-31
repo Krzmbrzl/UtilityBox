@@ -23,7 +23,7 @@ public interface IValidator {
 	 * Gets the error message explaining why the previously validated object is
 	 * invalid.<br>
 	 * If there has not been a validation yet <code>null</code> is returned. If
-	 * the validation was successfull an empty String is returned
+	 * the validation was successful an empty String is returned
 	 */
 	public String getValidationErrorMessage();
 }

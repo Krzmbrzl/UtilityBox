@@ -263,7 +263,7 @@ public class FilenameFormatter {
 	 * 
 	 * @param targetFile
 	 *            The new target file the {@link #file} should be renamed to
-	 * @return Whether or not the renaming was successfull
+	 * @return Whether or not the renaming was successful
 	 * @throws FileDoesNotExistsException
 	 *             If the {@link #file} does no longer exist
 	 */
@@ -320,7 +320,7 @@ public class FilenameFormatter {
 			char currentChar = builder.charAt(i);
 			
 			if (newWord && Character.isAlphabetic(currentChar)) {
-				// transform charcter too uppercase as it is at a word's start
+				// transform character too uppercase as it is at a word's start
 				builder.setCharAt(i, Character.toUpperCase(currentChar));
 			}
 			
@@ -369,8 +369,8 @@ public class FilenameFormatter {
 	 * @param bracketContent
 	 *            The content of the bracket
 	 * @param caseSensitive
-	 *            Whether the braacket content search is done case-sensitively
-	 * @return Whether or not to preserve this bracker
+	 *            Whether the bracket content search is done case-sensitively
+	 * @return Whether or not to preserve this bracket
 	 */
 	protected boolean preserveBracket(String bracketContent,
 			boolean caseSensitive) {

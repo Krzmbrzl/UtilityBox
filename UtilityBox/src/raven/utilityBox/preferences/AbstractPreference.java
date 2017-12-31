@@ -8,16 +8,15 @@ package raven.utilityBox.preferences;
  *
  */
 public abstract class AbstractPreference {
-	
-	public AbstractPreference() {
-		// TODO Auto-generated constructor stub
-	}
-	
+
 	/**
 	 * Initializes this preference by loading the respective values
 	 */
 	public abstract void initialize();
-	
+
+	/**
+	 * Initializes the this preference by loading the default values
+	 */
 	public abstract void initializeWithDefaults();
-	
+
 }
