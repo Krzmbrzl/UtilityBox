@@ -77,12 +77,12 @@ public abstract class AbstractAction implements IAction {
 
 		// make sure there are no null-values in between and all parameter are included
 		for (int i = 0; i < newParams.length; i++) {
-			if (i < args.length || args[i] != null) {
+			if (i < args.length && args[i] != null) {
 				newParams[i] = args[i];
 			}
 		}
 
-		if (!validateParameter(args)) {
+		if (!validateParameter(newParams)) {
 			Logger.getDefault()
 					.log(new LogMessage("The given parameter are invalid!", this, LogMessage.SEVERITY_ERROR));
 

@@ -1,7 +1,9 @@
 package raven.utilityBox.actions;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.List;
@@ -27,6 +29,15 @@ import raven.utilityBox.table.TableNullDivider;
 public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 
 	/**
+	 * The name of the file containing the info about previous runs of this action
+	 */
+	public static final String TIMESTAMP_FILE = ".timestamp";
+	/**
+	 * The shortcut indicating the home-directory of the current user
+	 */
+	public static final String HOME = "$$HOME$$";
+
+	/**
 	 * The spread-sheet to extract the data from
 	 */
 	private String spreadSheetPath;
@@ -34,6 +45,11 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 	 * The target directory the generated CSVs should be stored in
 	 */
 	protected File csvTargetDir;
+	/**
+	 * Indicating whether this action should check whether there have been changes
+	 * since it ran the last time on this spreadsheet
+	 */
+	protected boolean checkTimestamp;
 
 	/**
 	 * The flag to use for the second argument in order to indicate that the
@@ -79,6 +95,18 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 	@Override
 	protected EStatus doRun() {
 		try {
+			if (!csvTargetDir.exists()) {
+				csvTargetDir.mkdirs();
+			}
+
+			if (checkTimestamp && !checkTimestamp()) {
+				Logger.getDefault()
+						.log(new LogMessage(
+								"Aborting action as the original spreadsheet has not been modified since the last run",
+								this, LogMessage.SEVERITY_INFO));
+				return EStatus.OK;
+			}
+
 			ExtractODSToCSVRule rules = (ExtractODSToCSVRule) getPreferenceRules();
 
 			List<Table<String>> subTables = new TableNullDivider<String>(ODSExtractor.extract(spreadSheetPath))
@@ -88,10 +116,6 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 
 			Logger.getDefault().log(new LogMessage("Detected " + subTables.size() + " sub-tables in " + spreadSheetPath,
 					LogMessage.SEVERITY_INFO));
-
-			if (!csvTargetDir.exists()) {
-				csvTargetDir.mkdirs();
-			}
 
 			for (Table<String> currentTable : subTables) {
 				String name = extractNameAndFormat(currentTable);
@@ -134,6 +158,93 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 	}
 
 	/**
+	 * Checks whether this action even has to run (by checking the timestamp)
+	 * 
+	 * @return Whether this action should run
+	 */
+	protected boolean checkTimestamp() {
+		File timeStamp = new File(csvTargetDir, TIMESTAMP_FILE);
+		File spreadSheet = new File(spreadSheetPath);
+		boolean runAction = false;
+
+		try {
+			if (!timeStamp.exists()) {
+				// Create the file
+				timeStamp.createNewFile();
+
+				// write respective info in it
+				FileOutputStream out = new FileOutputStream(timeStamp);
+
+				out.write(("\"" + spreadSheetPath.replace(System.getProperty("user.home"), HOME) + "\" - "
+						+ System.currentTimeMillis()).getBytes());
+
+				out.close();
+
+				return true;
+			}
+
+			// check if there already is any entry and determine whether to run this action
+			StringBuilder builder = new StringBuilder();
+
+			BufferedReader reader = new BufferedReader(new FileReader(timeStamp));
+			String currentLine = null;
+			boolean currentSpreadSheetListed = false;
+
+			while ((currentLine = reader.readLine()) != null) {
+				String spreadSheetPath = currentLine.substring(1, currentLine.indexOf("\" - ")).replace(HOME,
+						System.getProperty("user.home"));
+
+				if (this.spreadSheetPath.equals(spreadSheetPath)) {
+					currentSpreadSheetListed = true;
+
+					// It is the same reference -> check the timestamp
+					int index = currentLine.indexOf("\" - ") + 4;
+					long stamp = Long.parseLong(currentLine.substring(index));
+
+					if (stamp < spreadSheet.lastModified()) {
+						runAction = true;
+
+						// update timestamp
+						currentLine = currentLine.replace(String.valueOf(stamp),
+								String.valueOf(System.currentTimeMillis()));
+					}
+				}
+
+				// add line to buffer
+				builder.append(currentLine + "\n");
+			}
+
+			reader.close();
+
+			if (!runAction && currentSpreadSheetListed) {
+				// No need to re-write the timestamp-file
+				return false;
+			}
+
+			if (!currentSpreadSheetListed) {
+				// add entry for the current spreadSheet
+				builder.append("\"" + spreadSheetPath.replace(System.getProperty("user.home"), HOME) + "\" - "
+						+ System.currentTimeMillis());
+
+				// action obviously has to run
+				runAction = true;
+			}
+
+			FileOutputStream out = new FileOutputStream(timeStamp);
+
+			out.write(builder.toString().trim().getBytes());
+
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+
+			Logger.getDefault().log(e, this);
+		}
+
+		return runAction;
+	}
+
+	/**
 	 * Tries to extract a name for the given table as specified in the first row or
 	 * column. An entry is considered a name if it is the only entry in the
 	 * respective row/column.
@@ -152,6 +263,8 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 		if (name != null) {
 			table.deleteRow(0);
 			table.trim();
+
+			name = name.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue".replace("ß", "ss"));
 
 			return name;
 		}
@@ -232,9 +345,9 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 			return false;
 		}
 
-		if (args.length != 2) {
+		if (args.length != 3) {
 			Logger.getDefault()
-					.log(new LogMessage("Expected the parameter array to contain 2 elements (got " + args.length + ")!",
+					.log(new LogMessage("Expected the parameter array to contain 3 elements (got " + args.length + ")!",
 							this, LogMessage.SEVERITY_ERROR));
 
 			return false;
@@ -290,6 +403,12 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 			csvTarget = (String) args[1];
 		}
 
+		if (!(args[2] instanceof Boolean)) {
+			Logger.getDefault()
+					.log(new LogMessage("Expected third argument to be of type Boolean (got \"" + args[2] + "\")!",
+							this, LogMessage.SEVERITY_ERROR));
+		}
+
 		return true;
 	}
 
@@ -306,23 +425,25 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 		}
 
 		this.csvTargetDir = csvTarget;
+
+		this.checkTimestamp = (Boolean) args[2];
 	}
 
 	@Override
 	public Object[] getDefaultParameter() {
-		return new Object[] { null, USE_SAME_DIR };
+		return new Object[] { null, USE_SAME_DIR, true };
 	}
 
 	@Override
 	protected String[] getParameterKeys() {
-		return new String[] { "spreadSheet", "targetDir" };
+		return new String[] { "spreadSheet", "targetDir", "checkTimestamp" };
 	}
 
 	@Override
 	protected ITypeConverter<String, Object>[] getParameterConverters() {
 		@SuppressWarnings("unchecked")
 		ITypeConverter<String, Object>[] converter = (ITypeConverter<String, Object>[]) Array
-				.newInstance(ITypeConverter.class, 2);
+				.newInstance(ITypeConverter.class, 3);
 
 		converter[0] = new ITypeConverter<String, Object>() {
 
@@ -333,6 +454,14 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 		};
 
 		converter[1] = converter[0];
+
+		converter[2] = new ITypeConverter<String, Object>() {
+
+			@Override
+			public Object convert(String input) {
+				return Boolean.parseBoolean(input);
+			}
+		};
 
 		return converter;
 	}

@@ -1,5 +1,6 @@
 package raven.utilityBox.activator;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,21 +17,6 @@ public class Activator {
 	protected static Activator instance;
 
 	public static void main(String[] args) {
-		// Mp3FilenameFormatAction formatAction = new Mp3FilenameFormatAction(
-		// new File(System.getProperty("user.home") + "/Music/Ripped/Mp3"));
-
-		// formatAction.run();
-
-		// ExtractODSToCSVAction extractor = new ExtractODSToCSVAction(
-		// System.getProperty("user.home") +
-		// "/Documents/Programming/TestingResources/TestSpreadsheet.ods", "CSV");
-
-
-		// extractor.run();
-
-		args = new String[] { "-ExtractODSToCSVAction", "spreadSheet='" + System.getProperty("user.home")
-				+ "/Documents/Programming/TestingResources/TestSpreadsheet.ods'", "targetDir=Test" };
-
 		getDefault().processArguments(args);
 	}
 
@@ -63,6 +49,8 @@ public class Activator {
 	 *            The argument array to process
 	 */
 	protected void processArguments(String[] args) {
+		extractMainProgramArguments(args);
+
 		IAction target = null;
 		List<String> parameter = new ArrayList<String>();
 
@@ -166,6 +154,60 @@ public class Activator {
 		if (target != null) {
 			setParameter(target, parameter);
 			target.run();
+		}
+	}
+
+	/**
+	 * Extracts the arguments that are meant for the main program instead for a
+	 * specific action. This function will replace all main-program-arguments with
+	 * empty strings
+	 * 
+	 * @param args
+	 *            The argument array
+	 */
+	private void extractMainProgramArguments(String[] args) {
+		for (int i = 0; i < args.length; i++) {
+			String current = args[i];
+
+			if (current.startsWith("-")) {
+				current = current.substring(1);
+			} else {
+				// has to start with '-'
+				continue;
+			}
+
+			if (current.contains("=")) {
+				// process key-value pairs
+				int index = current.indexOf("=");
+				String key = current.substring(0, index);
+				String value = current.substring(index + 1);
+
+				if (value.matches("\".*?\"") || value.matches("'.*?'")) {
+					value = value.substring(1, value.length() - 1);
+				}
+
+				switch (key.toLowerCase()) {
+				case "logfile":
+					Logger.getDefault().setLogFile(new File(value));
+
+					args[i] = "";
+					break;
+
+				default:
+					break;
+				}
+			} else {
+				// process flags
+				switch (current.toLowerCase()) {
+				case "echomessages":
+					Logger.getDefault().echoMessages(true);
+
+					args[i] = "";
+					break;
+				default:
+					break;
+				}
+			}
 		}
 	}
 
