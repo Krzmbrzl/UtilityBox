@@ -50,6 +50,14 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 	 * since it ran the last time on this spreadsheet
 	 */
 	protected boolean checkTimestamp;
+	/**
+	 * The replacement to use for empty cells
+	 */
+	protected String emptyCellReplacement;
+	/**
+	 * Indicates that the transposed tables should also be generated
+	 */
+	protected boolean addTransposed;
 
 	/**
 	 * The flag to use for the second argument in order to indicate that the
@@ -127,21 +135,29 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 				// append file extension
 				name = name + ".csv";
 
-				// write the table to file
-				File targetFile = new File(csvTargetDir, name);
+				for (int i = 0; i < (addTransposed ? 2 : 1); i++) {
+					if (i == 1) {
+						// its the transposed table's turn
+						name = name.replace(".csv", "_t.csv");
+						currentTable.transpose();
+					}
+					// write the table to file
+					File targetFile = new File(csvTargetDir, name);
 
-				targetFile.createNewFile();
+					targetFile.createNewFile();
 
-				FileOutputStream out = new FileOutputStream(targetFile);
+					FileOutputStream out = new FileOutputStream(targetFile);
 
-				out.write(currentTable.toCSV(rules.getColumnDelimiter(), rules.getDelimiterReplacement()).getBytes());
+					out.write(currentTable
+							.toCSV(rules.getColumnDelimiter(), rules.getDelimiterReplacement(), emptyCellReplacement)
+							.getBytes());
 
-				out.close();
+					out.close();
 
-				Logger.getDefault()
-						.log(new LogMessage(
-								"Wrote content of sub-table " + tableCounter + " to " + targetFile.getAbsolutePath(),
-								LogMessage.SEVERITY_INFO));
+					Logger.getDefault()
+							.log(new LogMessage("Wrote content of" + (i == 1 ? " transposed" : "") + " sub-table "
+									+ tableCounter + " to " + targetFile.getAbsolutePath(), LogMessage.SEVERITY_INFO));
+				}
 
 				tableCounter++;
 			}
@@ -345,10 +361,10 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 			return false;
 		}
 
-		if (args.length != 3) {
+		if (args.length != getDefaultParameter().length) {
 			Logger.getDefault()
-					.log(new LogMessage("Expected the parameter array to contain 3 elements (got " + args.length + ")!",
-							this, LogMessage.SEVERITY_ERROR));
+					.log(new LogMessage("Expected the parameter array to contain " + getDefaultParameter().length
+							+ " elements (got " + args.length + ")!", this, LogMessage.SEVERITY_ERROR));
 
 			return false;
 		}
@@ -409,6 +425,12 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 							this, LogMessage.SEVERITY_ERROR));
 		}
 
+		if (!(args[4] instanceof Boolean)) {
+			Logger.getDefault()
+					.log(new LogMessage("Expected fifth argument to be of type Boolean (got \"" + args[4] + "\")!",
+							this, LogMessage.SEVERITY_ERROR));
+		}
+
 		return true;
 	}
 
@@ -427,23 +449,27 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 		this.csvTargetDir = csvTarget;
 
 		this.checkTimestamp = (Boolean) args[2];
+
+		this.emptyCellReplacement = (String) args[3];
+
+		this.addTransposed = (Boolean) args[4];
 	}
 
 	@Override
 	public Object[] getDefaultParameter() {
-		return new Object[] { null, USE_SAME_DIR, true };
+		return new Object[] { null, USE_SAME_DIR, true, "", false };
 	}
 
 	@Override
 	protected String[] getParameterKeys() {
-		return new String[] { "spreadSheet", "targetDir", "checkTimestamp" };
+		return new String[] { "spreadSheet", "targetDir", "checkTimestamp", "replaceEmpty", "addTransposed" };
 	}
 
 	@Override
 	protected ITypeConverter<String, Object>[] getParameterConverters() {
 		@SuppressWarnings("unchecked")
 		ITypeConverter<String, Object>[] converter = (ITypeConverter<String, Object>[]) Array
-				.newInstance(ITypeConverter.class, 3);
+				.newInstance(ITypeConverter.class, 5);
 
 		converter[0] = new ITypeConverter<String, Object>() {
 
@@ -462,6 +488,10 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 				return Boolean.parseBoolean(input);
 			}
 		};
+
+		converter[3] = converter[0];
+
+		converter[4] = converter[2];
 
 		return converter;
 	}

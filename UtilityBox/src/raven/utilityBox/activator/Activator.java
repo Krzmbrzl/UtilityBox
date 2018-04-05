@@ -17,6 +17,10 @@ public class Activator {
 	protected static Activator instance;
 
 	public static void main(String[] args) {
+		//args = new String[] { "-ExtractODSToCSVAction",
+		//		"spreadSheet=\"" + System.getProperty("user.home")
+		//				+ "/Documents/University/Documents/Physik/Praktikum/Versuch K10 Gammastrahlung/Messwerte.ods\"",
+		//		"targetDir=subtables", "replaceEmpty={}", "addTransposed" };
 		getDefault().processArguments(args);
 	}
 
@@ -111,9 +115,10 @@ public class Activator {
 			// At this point the target has been set
 			// process key-value arguments
 			if (!currentArgument.contains("=")) {
-				Logger.getDefault().log(new LogMessage("Expected key-value pair but got \"" + currentArgument + "\"!",
-						this, LogMessage.SEVERITY_ERROR));
-				continue;
+				Logger.getDefault().log(new LogMessage(
+						"Expected key-value pair but got \"" + currentArgument + "\"! Using true as the fallback value",
+						this, LogMessage.SEVERITY_WARNING));
+				currentArgument += "=" + String.valueOf(true);
 			}
 
 			String key = currentArgument.substring(0, currentArgument.indexOf("=")).trim();
@@ -135,6 +140,7 @@ public class Activator {
 			if (value.isEmpty()) {
 				Logger.getDefault().log(
 						new LogMessage("Empty value in \"" + currentArgument + "\"!", this, LogMessage.SEVERITY_ERROR));
+				value = String.valueOf(true);
 				continue;
 			}
 
@@ -147,7 +153,19 @@ public class Activator {
 				continue;
 			}
 
-			parameter.add(index, value);
+			if (parameter.size() == index) {
+				// simply add it
+				parameter.add(value);
+			} else {
+				// insert it
+				if (parameter.size() < index) {
+					for (int i = parameter.size(); i <= index; i++) {
+						parameter.add(null);
+					}
+				}
+
+				parameter.set(index, value);
+			}
 		}
 
 		// run last action

@@ -1,10 +1,10 @@
 package raven.utilityBox.logging;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Calendar;
 
 import org.eclipse.swt.SWT;
@@ -86,10 +86,11 @@ public class Logger {
 
 		try {
 			if (!logFile.createNewFile()) {
-				// file does already exist -> make it empty
-				PrintWriter writer = new PrintWriter(logFile);
-				writer.print("");
-				writer.close();
+				// file does already exist -> append to it
+				Files.write(logFile.toPath(),
+						"\n\n---------------------------------------------------------------------------------------\n\n"
+								.getBytes(),
+						StandardOpenOption.APPEND);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -108,6 +109,8 @@ public class Logger {
 	 */
 	public void setLogFile(File file) {
 		logFile = file;
+
+		System.out.println(logFile.getAbsolutePath());
 	}
 
 	/**
@@ -183,8 +186,6 @@ public class Logger {
 		}
 
 		try {
-			FileWriter writer = new FileWriter(logFile, true);
-
 			String msg = message.getMessage();
 
 			switch (message.getSeverity()) {
@@ -210,8 +211,7 @@ public class Logger {
 					+ ((message.getContext() != null) ? " - (" + message.getContext().getClass().getSimpleName() + ")"
 							: "");
 
-			writer.append(msg);
-			writer.close();
+			Files.write(logFile.toPath(), msg.getBytes(), StandardOpenOption.APPEND);
 
 			if (echoMessages) {
 				System.out.println(msg);

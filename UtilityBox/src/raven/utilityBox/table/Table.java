@@ -448,9 +448,11 @@ public class Table<T> {
 	 *            The separator-character to be used
 	 * @param replacement
 	 *            The replacement for the separator in the cell-content
+	 * @param emptyReplacement
+	 *            The replacement for empty cells
 	 * @throws IllegalAccessException
 	 */
-	public String toCSV(String separator, String replacement) throws IllegalAccessException {
+	public String toCSV(String separator, String replacement, String emptyReplacement) throws IllegalAccessException {
 		validateTableAccess();
 
 		StringBuilder builder = new StringBuilder();
@@ -461,7 +463,7 @@ public class Table<T> {
 			T[] row = it.next();
 
 			for (T currentContent : row) {
-				builder.append((currentContent == null ? "" : currentContent.toString().replace(separator, replacement))
+				builder.append((currentContent == null ? emptyReplacement : currentContent.toString().replace(separator, replacement))
 						+ separator);
 			}
 			if (row.length > 0) {
@@ -476,13 +478,28 @@ public class Table<T> {
 	}
 
 	/**
+	 * Creates a CSV out of this table. This method will use an empty string to
+	 * represent empty cells.
+	 * 
+	 * @param separator
+	 *            The separator-character to be used
+	 * @param replacement
+	 *            The replacement for the separator in the cell-content
+	 * @throws IllegalAccessException
+	 */
+	public String toCSV(String separator, String replacement) throws IllegalAccessException {
+		return toCSV(separator, replacement, "");
+	}
+
+	/**
 	 * Creates a CSV out of this table. The column separator will be a tab ("\t")
-	 * and the row delimiter will be a simple newline ("\n").
+	 * and the row delimiter will be a simple newline ("\n"). Empty cells will be
+	 * represented by an empty String
 	 * 
 	 * @throws IllegalAccessException
 	 */
 	public String toCSV() throws IllegalAccessException {
-		return toCSV("\t", "    ");
+		return toCSV("\t", "    ", "");
 	}
 
 	/**

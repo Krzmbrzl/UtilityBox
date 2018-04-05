@@ -27,7 +27,7 @@ public class LogMessage {
 	 * The date formatter used by this logger
 	 */
 	public final static SimpleDateFormat dateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd_hh-mm-ss");
+			"yyyy-MM-dd_HH-mm-ss");
 	/**
 	 * A field holding the ID for the next <code>LogMessage</code>
 	 */
