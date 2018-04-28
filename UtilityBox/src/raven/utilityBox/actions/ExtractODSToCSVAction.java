@@ -150,7 +150,7 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 
 					out.write(currentTable
 							.toCSV(rules.getColumnDelimiter(), rules.getDelimiterReplacement(), emptyCellReplacement)
-							.getBytes());
+							.replace("%", "\\%").getBytes());
 
 					out.close();
 
@@ -280,7 +280,7 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 			table.deleteRow(0);
 			table.trim();
 
-			name = name.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue".replace("ß", "ss"));
+			name = name.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss");
 
 			return name;
 		}
