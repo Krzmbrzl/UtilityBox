@@ -17,10 +17,6 @@ public class Activator {
 	protected static Activator instance;
 
 	public static void main(String[] args) {
-		//args = new String[] { "-ExtractODSToCSVAction",
-		//		"spreadSheet=\"" + System.getProperty("user.home")
-		//				+ "/Documents/University/Documents/Physik/Praktikum/Versuch K10 Gammastrahlung/Messwerte.ods\"",
-		//		"targetDir=subtables", "replaceEmpty={}", "addTransposed" };
 		getDefault().processArguments(args);
 	}
 
