@@ -12,9 +12,17 @@ import raven.utilityBox.interfaces.IAction;
 import raven.utilityBox.logging.LogMessage;
 import raven.utilityBox.logging.Logger;
 
-public class Activator {
+public class UtilityBox {
+	/**
+	 * The current version of this program
+	 */
+	public static final double VERSION = 1.1;
+	/**
+	 * The identifier String containing the name and the version of this program
+	 */
+	public static final String IDENTIFIER = "UtilityBox v" + VERSION;
 
-	protected static Activator instance;
+	protected static UtilityBox instance;
 
 	public static void main(String[] args) {
 		getDefault().processArguments(args);
@@ -23,9 +31,9 @@ public class Activator {
 	/**
 	 * Gets the default instance of this activator
 	 */
-	public static Activator getDefault() {
+	public static UtilityBox getDefault() {
 		if (instance == null) {
-			instance = new Activator();
+			instance = new UtilityBox();
 		}
 
 		return instance;
@@ -37,7 +45,7 @@ public class Activator {
 	protected List<Class<? extends IAction>> actions;
 
 
-	public Activator() {
+	public UtilityBox() {
 		registerActions();
 	}
 
@@ -48,8 +56,12 @@ public class Activator {
 	 * @param args
 	 *            The argument array to process
 	 */
+	@SuppressWarnings("deprecation")
 	protected void processArguments(String[] args) {
 		extractMainProgramArguments(args);
+
+		// log program version
+		Logger.getDefault().log(new LogMessage("This is " + IDENTIFIER, instance, LogMessage.SEVERITY_INFO));
 
 		IAction target = null;
 		List<String> parameter = new ArrayList<String>();

@@ -122,7 +122,7 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 
 			int tableCounter = 0;
 
-			Logger.getDefault().log(new LogMessage("Detected " + subTables.size() + " sub-tables in " + spreadSheetPath,
+			Logger.getDefault().log(new LogMessage("Detected " + subTables.size() + " sub-tables in " + spreadSheetPath, this,
 					LogMessage.SEVERITY_INFO));
 
 			for (Table<String> currentTable : subTables) {
@@ -147,16 +147,20 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 					targetFile.createNewFile();
 
 					FileOutputStream out = new FileOutputStream(targetFile);
+					
+					String content = currentTable
+							.toCSV(rules.getColumnDelimiter(), rules.getDelimiterReplacement(), emptyCellReplacement);
+						
+					// escape all percent signs that have not been escaped already
+					content = content.replaceAll("(^|[^\\\\]|(?:^|[^\\\\])(?:\\\\\\\\)+)(%)", "$1\\\\$2");
 
-					out.write(currentTable
-							.toCSV(rules.getColumnDelimiter(), rules.getDelimiterReplacement(), emptyCellReplacement)
-							.replace("%", "\\%").getBytes());
+					out.write(content.getBytes());
 
 					out.close();
 
 					Logger.getDefault()
 							.log(new LogMessage("Wrote content of" + (i == 1 ? " transposed" : "") + " sub-table "
-									+ tableCounter + " to " + targetFile.getAbsolutePath(), LogMessage.SEVERITY_INFO));
+									+ tableCounter + " to " + targetFile.getAbsolutePath(),this, LogMessage.SEVERITY_INFO));
 				}
 
 				tableCounter++;
@@ -165,7 +169,7 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 		} catch (IOException | IllegalAccessException e) {
 			e.printStackTrace();
 
-			Logger.getDefault().log(e);
+			Logger.getDefault().log(e, this);
 
 			return EStatus.ERROR;
 		}
