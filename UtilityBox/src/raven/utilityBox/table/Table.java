@@ -463,7 +463,7 @@ public class Table<T> {
 			T[] row = it.next();
 
 			for (T currentContent : row) {
-				builder.append((currentContent == null ? emptyReplacement : currentContent.toString().replace(separator, replacement))
+				builder.append((currentContent == null ? emptyReplacement : currentContent.toString().replace(separator, replacement).replace("\n", " "))
 						+ separator);
 			}
 			if (row.length > 0) {
