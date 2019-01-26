@@ -16,43 +16,51 @@ public class ODSExtractor {
 
 	/**
 	 * Extracts the data from the spreadsheet at the specified path in form of a
-	 * {@link Table}
+	 * {@link Table}. Every sheet inside the spreadsheet will be represented by its
+	 * own Table.
 	 * 
 	 * @param path
 	 *            The path to the spreadsheet
-	 * @return A table with the data corresponding to the spreadsheet
+	 * @return A List of tables with the data corresponding to the spreadsheet
 	 * @throws IOException
 	 */
-	public static Table<String> extract(String path) throws IOException {
+	public static List<Table<String>> extract(String path) throws IOException {
+		List<Table<String>> tables = new ArrayList<>();
+
 		File spreadsheetFile = new File(path);
-
 		final SpreadSheet spreadsheet = SpreadSheet.createFromFile(spreadsheetFile);
-		Sheet sheet = spreadsheet.getSheet(0);
 
-		int columns = sheet.getColumnCount();
-		int rows = sheet.getRowCount();
+		for (int k = 0; k < spreadsheet.getSheetCount(); k++) {
 
-		// gather the content of the respective cells
-		List<List<String>> data = new ArrayList<List<String>>();
+			Sheet sheet = spreadsheet.getSheet(k);
 
-		for (int i = 0; i < rows; i++) {
-			List<String> currentRow = new ArrayList<String>();
+			int columns = sheet.getColumnCount();
+			int rows = sheet.getRowCount();
 
-			for (int j = 0; j < columns; j++) {
-				String content = sheet.getCellAt(j, i).getTextValue();
-				currentRow.add(content.isEmpty() ? null : content);
+			// gather the content of the respective cells
+			List<List<String>> data = new ArrayList<List<String>>();
+
+			for (int i = 0; i < rows; i++) {
+				List<String> currentRow = new ArrayList<String>();
+
+				for (int j = 0; j < columns; j++) {
+					String content = sheet.getCellAt(j, i).getTextValue();
+					currentRow.add(content.isEmpty() ? null : content);
+				}
+				data.add(currentRow);
 			}
-			data.add(currentRow);
+
+			String[][] arrayData = new String[data.size()][];
+
+			for (int i = 0; i < data.size(); i++) {
+				arrayData[i] = data.get(i).toArray(new String[data.get(i).size()]);
+			}
+
+			// create a table out of the gathered data
+			tables.add(new Table<>(String.class, arrayData));
 		}
 
-		String[][] arrayData = new String[data.size()][];
-
-		for (int i = 0; i < data.size(); i++) {
-			arrayData[i] = data.get(i).toArray(new String[data.get(i).size()]);
-		}
-
-		// create a table out of the gathered data
-		return new Table<>(String.class, arrayData);
+		return tables;
 	}
 
 	/**
@@ -63,13 +71,18 @@ public class ODSExtractor {
 	 *            The path to the spreadsheet
 	 * @return All sub-tables corresponding to the spreadsheet
 	 * @throws IOException
+	 * @throws IllegalAccessException 
 	 */
-	public static List<Table<String>> extractSubtables(String path) throws Exception {
-		Table<String> table = extract(path);
+	public static List<Table<String>> extractSubtables(String path) throws IOException, IllegalAccessException {
+		List<Table<String>> subTables = new ArrayList<>();
 
-		// divide table into all possible sub-tables
-		TableDivider<String> divider = new TableNullDivider<String>(table);
-		List<Table<String>> subTables = divider.divide();
+		List<Table<String>> tables = extract(path);
+
+		for (Table<String> currentTable : tables) {
+			// divide table into all possible sub-tables
+			TableDivider<String> divider = new TableNullDivider<String>(currentTable);
+			subTables.addAll(divider.divide());
+		}
 
 		return subTables;
 	}
@@ -78,8 +91,8 @@ public class ODSExtractor {
 		try {
 			List<Table<String>> subtables = extractSubtables(
 					System.getProperty("user.home") + "/Documents/Programming/TestingResources/TestSpreadsheet.ods");
-			
-			for(Table<String> currenttable :subtables) {
+
+			for (Table<String> currenttable : subtables) {
 				System.out.println(currenttable.toCSV() + "\n");
 			}
 		} catch (Exception e) {

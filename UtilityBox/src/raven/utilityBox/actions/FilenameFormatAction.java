@@ -136,8 +136,6 @@ public class FilenameFormatAction extends AbstractPreferenceSensitiveAction {
 		}
 
 		if (processFileType(fileExtension)) {
-			System.out.println(file.getAbsolutePath());
-
 			FilenameFormatter formatter = getFormatter(file);
 
 			formatter.format();

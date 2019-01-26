@@ -109,8 +109,6 @@ public class Logger {
 	 */
 	public void setLogFile(File file) {
 		logFile = file;
-
-		System.out.println(logFile.getAbsolutePath());
 	}
 
 	/**

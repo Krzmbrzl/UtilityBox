@@ -117,8 +117,7 @@ public class ExtractODSToCSVAction extends AbstractPreferenceSensitiveAction {
 
 			ExtractODSToCSVRule rules = (ExtractODSToCSVRule) getPreferenceRules();
 
-			List<Table<String>> subTables = new TableNullDivider<String>(ODSExtractor.extract(spreadSheetPath))
-					.divide();
+			List<Table<String>> subTables = ODSExtractor.extractSubtables(spreadSheetPath);
 
 			int tableCounter = 0;
 

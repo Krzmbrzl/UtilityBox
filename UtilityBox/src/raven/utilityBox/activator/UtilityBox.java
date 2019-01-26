@@ -16,7 +16,7 @@ public class UtilityBox {
 	/**
 	 * The current version of this program
 	 */
-	public static final double VERSION = 1.1;
+	public static final double VERSION = 1.2;
 	/**
 	 * The identifier String containing the name and the version of this program
 	 */
